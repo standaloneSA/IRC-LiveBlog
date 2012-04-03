@@ -1,27 +1,30 @@
 <?php
 // config
-$exchangeName = 'new_topic1';
-$routingKey = 'routing.key';
-$queueName = 'myqueue';
+$exchangeName = 'amq.fanout';
+$queueName = "queue1"; 
 
 // connect
 $connection = new AMQPConnection();
 $connection->connect() or die ("Error connecting\n");
 
-$chan = new AMQPChannel($connection); 
 
 // setup our queue
+$chan = new AMQPChannel($connection); 
 $q = new AMQPQueue($chan);
-$q->setName = $queueName; 
+$q->setName($queueName); 
 $q->declare();
 
-// Bind it on the exchange to routing.key
-$q->bind($exchangeName, $routingKey);
+$q->bind($exchangeName, $queueName);
 
-// show the message
-print_r($q->get());
+$envelope = $q->get(AMQP_AUTOACK);
+if ( ! $envelope ) { 
+	print "It appears that the queue is empty\n"; 
+} else { 
+	print "We may have found something: \n"; 
+	print $envelope->getBody() . "\n";  
+}
+$q->unbind($exchangeName, $queueName);
 
-// disconnect
 $connection->disconnect();
 
 ?>

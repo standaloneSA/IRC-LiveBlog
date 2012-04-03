@@ -1,7 +1,7 @@
 <?php
 
 // config
-$routingKey = 'routing.key';
+$routingKey = 'IRCoutput';
 $message = $argv[1];
 
 // connect
@@ -9,15 +9,22 @@ $connection = new AMQPConnection();
 $connection->connect();
 
 $chan = new AMQPChannel($connection); 
-$ex = new AMQPExchange($chan); 
-$ex->setName('new_topic1'); 
-if ( ! $ex->getType() ) { 
-	$ex->setType('direct'); 
-	$ex->declare(); 
+if ( $chan->isConnected() ) { 
+	$ex = new AMQPExchange($chan); 
+} else { 
+	print "Error connecting to channel\n"; 
+	exit;
 }
 
+$ex->setName("IRClog"); 
+$ex->setType("fanout"); 
+$ex->declare(); 
+
+
 $chan->startTransaction(); 
+//$ex->publish($message, $routingKey, AMQP_NOPARAM, array("delivery_mode", "2")); 
 $ex->publish($message, $routingKey); 
 $chan->commitTransaction(); 
+print "Sent: " . $argv[1] . "\n"; 
 
 ?>
