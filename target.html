@@ -1,0 +1,123 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="jquery.scrollTo.js"></script>
+<script type="text/javascript">
+
+var indexNum = 0;
+
+$(document).ready(
+	function() { 
+		fetchIRC(); 
+		//setInterval("ajaxd()", 10000); 
+		setInterval("fetchIRC()", 1500); 
+	}
+); 
+
+function ajaxd() { 
+	$.ajax({
+		type: "GET", 
+		url: "random.php", 
+		data: "indexNum=" + $("#indexCount").val(), 
+		success: function(msg) { 
+			$("#results").append(msg); 
+			$("#indexCount").val( parseInt( $("#indexCount").val() ) + 1 ) ; 
+		}
+	});
+}
+
+function fetchIRC() { 
+	$.getJSON("output.json", parseJSONinput); 
+}
+
+function parseJSONinput(objJSON) { 
+
+	//console.log(objJSON); 
+
+	objLen = objJSON.length; 
+	initLoad = 5000; 
+
+	if ( indexNum == 0 ) { 
+		indexNum = objLen - initLoad; 
+		if ( indexNum < 0 ) { 
+			indexNum = 0; 
+		}
+	}
+
+	for(var i = indexNum; i < objJSON.length; i++) { 
+		var decoded = $("<div/>").text(objJSON[i][2]).html();
+		$("#results").append(decoded); 
+		$("#results").append("<br>");
+		indexNum = i+1; 
+	//	$("#mydiv").scrollTop($("#mydiv")[0].scrollHeight);
+
+	}
+	if (document.getElementById("checkScroll").checked) { 
+		$("#results").scrollTo('100%'); 
+		$("#results").css("overflow", "hidden"); 
+	} else { 
+		$("#results").css("overflow", "scroll"); 
+		//$("#results").style.overflow = 'scroll'; 
+	}
+
+} // end function parseJSONinput()
+					
+function toggleScroll() { 
+   if (document.getElementById("checkScroll").checked) { 
+      $("#results").scrollTo('100%'); 
+      $("#results").css("overflow", "hidden"); 
+   } else { 
+      $("#results").css("overflow", "scroll"); 
+      //$("#results").style.overflow = 'scroll'; 
+   }
+
+} 
+
+</script>
+
+<style type="text/css">
+
+div.chatwindow
+{
+border-style:dotted;
+border-width:4px;
+width:95%;
+height:80%;
+padding:10px;
+overflow-y:scroll;
+}
+
+
+div.chatHeader
+{
+width:80%;
+height:50px;
+}
+
+h1
+{
+text-align:center;
+}
+</style>
+
+</head>
+<body>
+
+<div class="chatHeader">
+<h3>You are watching #LOPSA-Live on freenode!</h1>
+</div>
+<div id="results" width="80%" class="chatwindow">
+</div>
+<div class="controlPanel">
+<div class="checkScrollBox">
+Auto Scroll
+<input type="checkbox" id="checkScroll" name="checkScroll" value="checkScroll" label="Auto Scroll" checked onClick="toggleScroll()">
+(uncheck to review history)
+</div>
+</div>
+<input type="hidden" value="0" id="indexCount"/>
+
+</body>
+</html>
+
+
