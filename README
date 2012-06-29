@@ -1,0 +1,32 @@
+IRC-LiveBlog 
+
+The idea of this project is to allow a webpage to be updated 
+in realtime with the contents of an IRC channel. 
+
+The original inspiration was the LOPSA-Live meetings of the 
+League of Professional System Administrators (http://lopsa.org)
+
+The key files are irc.php, which includes the code for connecting 
+to IRC, creating the AMQP exchange, and sending IRC updates to it. 
+
+Also necessary is filewriter.php, which reads the queue and 
+creates an array, then writes JSON output to the flat file, which
+is eventually fed into the browser by the target.html page. 
+
+Requirements 
+------------
+
+Net_SmartPHP (http://pear.php.net/package/Net_SmartIRC/) 
+AMQP Broker (I used RabbitMQ (http://www.rabbitmq.com/))
+amqp library in PECL (http://pecl.php.net/package/amqp) 
+
+Installation 
+------------
+
+Basically, move target.html wherever you want, adjust it to 
+point to wherever you want the json output file to live, and
+that's about it, other than running irc.php prior to filewriter.php
+so that the exchange can be created. 
+
+This software is very...fresh. Forgive it of its weaknesses. 
+
