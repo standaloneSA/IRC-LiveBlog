@@ -1,39 +1,42 @@
+#!/usr/bin/php
 <?php
 
 include_once("Net/SmartIRC.php"); 
 
-class ircServer { 
+$channel = "#LOPSA-live"; 
+$botName = "MPSwindow"; 
+$botRealName = "SmartBot 2000 (ask standalone.sysadmin@gmail.com)"; 
 
-	private $server = ""; 
-	private $channel = ""; 
-	private $nick	= ""; 
-	private $port = "6667"; 
-	
-	function __construct($server, $channel, $nick) { 
-		$this->server = $server; 
-		$this->channel = $channel; 
-		$this->user = $user; 
-	} 
-	
-	private function connect($server) { 
-	
-	} // end connect()
-
-	private function disconnect() { 
-		
-	} // end disconnect()
-	
-	private function joinChannel($channel) { 
-	
-	} // end joinChannel()
-	
-	private function partChannel() { 
-	
-	} // end partChannel()
-
-} 
 
 class mybot { 
+
+	// AMQP Variables
+	private $messageQueue = "IRCoutput"; 
+	private $connection = ""; 
+	private $channel = ""; 
+	private $exchange = ""; 
+
+	function __construct() { 
+		$this->AMQPinit(); 
+	} // end constructor()
+
+	function AMQPinit() { 
+		$this->connection = new AMQPConnection(); 
+		$this->connection->connect(); 
+
+		$this->channel = new AMQPChannel($this->connection); 
+		if ( $this->channel->isConnected() ) { 
+			$this->exchange = new AMQPExchange($this->channel); 
+		} else { 
+			print "Error connecting to channel\n"; 
+			exit; 
+		}
+	
+		$this->exchange->setName("IRClog"); 
+		$this->exchange->setType("fanout"); 
+		$this->exchange->declare(); 
+
+	} // end function AMQPinit()
 
 	function handleUpdate(&$irc, &$data) { 
 		$type = $data->type; 
@@ -65,9 +68,16 @@ class mybot {
 			case SMARTIRC_TYPE_CHANNELMODE:
 				$outputMessage = "Mode change: " . $data->rawmessage;
 				break; 
+			default: 
+				$outputMessage = ""; 
 			}
 
-			print $outputMessage . "\n"; 
+			if ( $outputMessage != "" ) { 
+				$this->channel->startTransaction(); 
+				$this->exchange->publish($outputMessage, $this->messageQueue); 
+				$this->channel->commitTransaction(); 
+				print $outputMessage . "\n"; 
+			}
 
 	} // end function handleUpdate()
 } // end class mybot()
@@ -79,13 +89,13 @@ $irc = &new Net_SmartIRC();
 //$irc->setDebug(SMARTIRC_DEBUG_ALL); 
 $irc->setUseSockets(TRUE); 
 
-print "\nConnecting to irc.freenode.net\n"; 
-$irc->connect('irc.freenode.net', 6667); 
+print "\nConnecting to irc.lopsa.org\n"; 
+$irc->connect('irc.lopsa.org', 6667); 
 
-$irc->login('Net_SmartIRC', 'Net_SmartIRC Client '.SMARTIRC_VERSION.' (example.php)', 0, 'Net_SmartIRC'); 
+$irc->login("$botName", "$botRealName", 0, 'Net_SmartIRC'); 
 
-print "Joining #smartirc-test\n"; 
-$irc->join(array('#smartirc-test')); 
+print "Joining $channel\n"; 
+$irc->join(array("$channel")); 
 
 //$irc->registerActionhandler(SMARTIRC_TYPE_CHANNEL, '.', $bot, 'channelMessage');
 //$irc->registerActionhandler(SMARTIRC_TYPE_JOIN, '.*', $bot, 'channelMemberChange'); 

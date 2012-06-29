@@ -1,7 +1,7 @@
 <?php
 
 // config
-$routingKey = 'IRCoutput';
+$routingKey = 'test_parallel';
 $message = $argv[1];
 
 // connect
@@ -16,7 +16,7 @@ if ( $chan->isConnected() ) {
 	exit;
 }
 
-$ex->setName("IRClog"); 
+$ex->setName("IRClog1"); 
 $ex->setType("fanout"); 
 $ex->declare(); 
 
